@@ -47,7 +47,7 @@ class Order
     public $resource;
 
     /**
-     * @var \Dotdigitalgroup\Email\Model\ResourceModel\ContactFactory
+     * @var \Dotdigitalgroup\Email\Model\ContactFactory
      */
     public $contactFactory;
     /**
@@ -83,7 +83,7 @@ class Order
      * @param \Dotdigitalgroup\Email\Helper\Data $helper
      * @param \Dotdigitalgroup\Email\Model\Connector\OrderFactory $connectorOrderFactory
      * @param \Dotdigitalgroup\Email\Model\OrderFactory $orderFactory
-     * @param \Dotdigitalgroup\Email\Model\ResourceModel\ContactFactory $contactFactory
+     * @param \Dotdigitalgroup\Email\Model\ContactFactory $contactFactory
      * @param \Magento\Framework\App\ResourceConnection $resource
      * @param \Magento\Sales\Model\OrderFactory $salesOrderFactory
      * @param \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
@@ -94,7 +94,7 @@ class Order
         \Dotdigitalgroup\Email\Helper\Data $helper,
         \Dotdigitalgroup\Email\Model\Connector\OrderFactory $connectorOrderFactory,
         \Dotdigitalgroup\Email\Model\OrderFactory $orderFactory,
-        \Dotdigitalgroup\Email\Model\ResourceModel\ContactFactory $contactFactory,
+        \Dotdigitalgroup\Email\Model\ContactFactory $contactFactory,
         \Magento\Framework\App\ResourceConnection $resource,
         \Magento\Sales\Model\OrderFactory $salesOrderFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManagerInterface
@@ -191,7 +191,14 @@ class Order
          * Add guest to contacts table.
          */
         if (!empty($this->guests)) {
-            $this->contactFactory->create()
+            $contactModel = $this->contactFactory->create();
+            $emailContacts = $contactModel->getCollection()
+                ->addFieldToFilter('is_guest', 1)
+                ->getColumnValues('email');
+
+            $this->guests = array_diff_key($this->guests, array_flip($emailContacts));
+
+            $contactModel->getResource()
                 ->insert($this->guests);
         }
 
@@ -319,7 +326,7 @@ class Order
                     && $order->getCustomerEmail()
                 ) {
                     //add guest to the list
-                    $this->guests[] = [
+                    $this->guests[$order->getCustomerEmail()] = [
                         'email' => $order->getCustomerEmail(),
                         'website_id' => $websiteId,
                         'store_id' => $storeId,

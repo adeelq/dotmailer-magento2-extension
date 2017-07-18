@@ -482,6 +482,7 @@ class InstallSchema implements InstallSchemaInterface
     /**
      * @param Table $campaignTable
      * @return Table
+     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      */
     private function addColumnsToCampaignTable($campaignTable)
     {

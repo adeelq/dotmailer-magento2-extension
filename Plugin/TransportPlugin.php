@@ -22,14 +22,21 @@ class TransportPlugin
     private $smtp;
 
     /**
+     * @var \ReflectionClassFactory
+     */
+    private $reflectionClassFactory;
+
+    /**
      * TransportPlugin constructor.
      *
      * @param \Zend_Mail_Transport_SmtpFactory $smtpFactory
      * @param \Dotdigitalgroup\Email\Helper\Transactional $helper
+     * @param \ReflectionClassFactory $reflectionClassFactory
      */
     public function __construct(
         \Zend_Mail_Transport_SmtpFactory $smtpFactory,
-        \Dotdigitalgroup\Email\Helper\Transactional $helper
+        \Dotdigitalgroup\Email\Helper\Transactional $helper,
+        \ReflectionClassFactory $reflectionClassFactory
     ) {
         $this->helper   = $helper;
         $this->smtp = $smtpFactory->create(
@@ -38,6 +45,7 @@ class TransportPlugin
             'config' => $this->helper->getTransportConfig()
             ]
         );
+        $this->reflectionClassFactory = $reflectionClassFactory;
     }
 
     /**
@@ -52,7 +60,7 @@ class TransportPlugin
         \Closure $proceed
     ) {
         if ($this->helper->isEnabled()) {
-            $reflection = new \ReflectionClass($subject);
+            $reflection = $this->reflectionClassFactory->create([$subject]);
 
             if (method_exists($subject, 'getMessage')) {
                 $this->smtp->send($subject->getMessage());
